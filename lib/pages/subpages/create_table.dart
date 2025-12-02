@@ -1,7 +1,112 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import '../base_page/base_page.dart';
+import '../classes/events.dart';
+
+class ReusableDropdownSearch<T> extends StatelessWidget {
+  final List<T> items;
+  final T? selectedItem;
+  final Function(T?) onChanged;
+  final String Function(T) itemToString; // Converte T in String per display
+  final Color? backgroundColor;
+  final String? hintText;
+  final bool showSearchBox;
+
+  const ReusableDropdownSearch({
+    Key? key,
+    required this.items,
+    required this.selectedItem,
+    required this.onChanged,
+    required this.itemToString,
+    this.backgroundColor,
+    this.hintText,
+    this.showSearchBox = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownSearch<String>(
+      items: (f, cs) => items.map(itemToString).toList(),
+      popupProps: PopupProps.menu(
+        showSearchBox: showSearchBox,
+        searchFieldProps: TextFieldProps(),
+        itemBuilder: (context, item, isDisabled, isSelected) {
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 12,
+            ),
+            title: Text(
+              item,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        },
+        containerBuilder: (ctx, popupWidget) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Flexible(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: backgroundColor ?? Colors.grey[20],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: popupWidget,
+              ),
+            ),
+          ],
+        ),
+      ),
+      dropdownBuilder: (context, selectedItem) => ListTile(
+        title: Text(
+          selectedItem != null
+              ? itemToString(
+                  items.firstWhere((i) => itemToString(i) == selectedItem),
+                )
+              : '',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+      decoratorProps: DropDownDecoratorProps(
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: backgroundColor ?? Colors.grey[20],
+          border: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          hintText: hintText ?? 'Seleziona...',
+          hintStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+        ),
+      ),
+      selectedItem: selectedItem != null
+          ? itemToString(selectedItem as T)
+          : null,
+      onChanged: (value) {
+        if (value != null) {
+          onChanged(items.firstWhere((item) => itemToString(item) == value));
+        }
+      },
+    );
+  }
+}
 
 class Game {
   String? title;
@@ -23,6 +128,7 @@ class _CreateTablePageState extends State<CreateTablePage> {
   @override
   void initState() {
     super.initState();
+    initializeDateFormatting('it_IT', null);
     loadGames();
   }
 
@@ -35,154 +141,91 @@ class _CreateTablePageState extends State<CreateTablePage> {
 
   @override
   Widget build(BuildContext context) {
+    final args =
+        (ModalRoute.of(context)!.settings.arguments ?? <String, dynamic>{})
+            as Map;
+    Event selectedDate = args['selectedDate'];
+    List<Event> dates = args['dates'];
     return BasePage(
       title: 'Crea Tavolo',
-      body: Column(
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                // Dropdown per scegliere il gioco
-                DropdownSearch<String>(
-                  items: (f, cs) =>
-                      games.map((game) => game.title as String).toList(),
-                  popupProps: PopupProps.menu(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0), // Spazio sx/dx
+        child: Column(
+          children: [
+            Padding(padding: const EdgeInsets.only(top: 20)),
+            Expanded(
+              child: Column(
+                spacing: 15,
+                children: [
+                  // Dropdown per scegliere il gioco
+                  ReusableDropdownSearch<Game>(
+                    items: games,
+                    selectedItem: selectedGame,
+                    onChanged: (game) => selectedGame = game,
+                    itemToString: (game) => game.title ?? '',
+                    hintText: 'Scegli il gioco...',
                     showSearchBox: true,
-                    searchFieldProps: TextFieldProps(),
-                    disabledItemFn: (String? item) => false,
                   ),
-                  decoratorProps: DropDownDecoratorProps(
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      labelText: 'Gioco',
-                      hintText: 'Scegli il gioco...',
-                      hintStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
+                  // Dropdown per scegliere la data
+                  ReusableDropdownSearch<Event>(
+                    items: dates,
+                    selectedItem: selectedDate,
+                    onChanged: (date) => selectedDate = date as Event,
+                    itemToString: (date) => toBeginningOfSentenceCase(
+                      DateFormat(
+                        'EEEE, dd MMMM',
+                        'it_IT',
+                      ).format(date.date.toDate()),
                     ),
+                    hintText: 'Scegli la data...',
                   ),
-                  onChanged: (value) => selectedGame = games.firstWhere(
-                    (game) => game.title == value,
+                  // Dropdown per scegliere l'ora per la data selezionata
+                  ReusableDropdownSearch<String>(
+                    items: selectedDate.availableTimes,
+                    selectedItem: selectedDate.availableTimes[0],
+                    onChanged: (time) => selectedTime = time,
+                    itemToString: (time) => time,
+                    hintText: 'Scegli l\'ora...',
                   ),
-                ),
-                Padding(padding: const EdgeInsets.only(top: 8.0)),
-
-                // Dropdown per scegliere la data
-                DropdownSearch<String>(
-                  items: (f, cs) => [
-                    '10/12/2025',
-                    '17/12/2025',
-                    '07/01/2026',
-                    '14/01/2026',
-                  ],
-                  popupProps: PopupProps.menu(
-                    showSearchBox: true,
-                    searchFieldProps: TextFieldProps(),
-                    disabledItemFn: (String? item) => false,
-                  ),
-                  decoratorProps: DropDownDecoratorProps(
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      labelText: 'Data',
-                      hintText: 'Scegli la data...',
-                      hintStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                  onChanged: (value) => selectedDate = value,
-                ),
-                Padding(padding: const EdgeInsets.only(top: 8.0)),
-                // Dropdown per scegliere l'ora per la data selezionata
-                DropdownSearch<String>(
-                  items: (f, cs) => ['21:00', '21:30', '22:00', '22:30'],
-                  popupProps: PopupProps.menu(
-                    showSearchBox: true,
-                    searchFieldProps: TextFieldProps(),
-                    disabledItemFn: (String? item) => false,
-                  ),
-                  decoratorProps: DropDownDecoratorProps(
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      labelText: 'Ora',
-                      hintText: 'Scegli l\'ora...',
-                      hintStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                  onChanged: (value) => selectedTime = value,
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 10.0),
-            child: SizedBox(
-              child: ElevatedButton(
-                onPressed: () async {
-                  try {
-                    await FirebaseFirestore.instance.collection('tables').add({
-                      'game': selectedGame?.title,
-                      'maxPlayers': 6,
-                      'date': selectedDate,
-                      'players': [],
-                      'time': selectedTime,
-                      'imagePath':
-                          'https://www.magobiribago.it/wp-content/uploads/2021/11/8033772890199-1.jpg',
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Tavolo creato con successo!'),
-                      ),
-                    );
-                    Navigator.pop(context);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Errore durante la creazione: $e'),
-                      ),
-                    );
-                  }
-                },
-                child: const Text('Crea tavolo'),
+                ],
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0, bottom: 10.0),
+              child: SizedBox(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('tables')
+                          .add({
+                            'game': selectedGame?.title,
+                            'maxPlayers': 6,
+                            'date': selectedDate.date,
+                            'players': [],
+                            'time': selectedTime,
+                            'imagePath': '',
+                          });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tavolo creato con successo!'),
+                        ),
+                      );
+                      Navigator.pop(context);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Errore durante la creazione: $e'),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Crea tavolo'),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

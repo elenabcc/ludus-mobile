@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'base_page/base_page.dart';
+import 'classes/events.dart';
 
 class Table {
   String name;
@@ -23,13 +24,6 @@ class Table {
   bool get canJoin => players < maxPlayers;
 }
 
-class Event {
-  Timestamp date;
-  List<String> availableTimes;
-
-  Event({required this.date, required this.availableTimes});
-}
-
 class Tables extends StatefulWidget {
   const Tables({super.key});
 
@@ -39,7 +33,7 @@ class Tables extends StatefulWidget {
 
 class _TablesState extends State<Tables> {
   List<Event> dates = [];
-  Timestamp? selectedDate;
+  Event? selectedDate;
   final User? currentUser = FirebaseAuth.instance.currentUser;
   String title = 'Tavoli disponibili';
 
@@ -68,7 +62,7 @@ class _TablesState extends State<Tables> {
           )
           .toList();
       if (dates.isNotEmpty && selectedDate == null) {
-        selectedDate = dates[0].date;
+        selectedDate = dates[0];
       }
       ;
     });
@@ -116,10 +110,10 @@ class _TablesState extends State<Tables> {
                           horizontal: 4.0,
                         ), // spazio orizzontale tra bottoni
                         child: ElevatedButton(
-                          onPressed: selectedDate == doc.date
+                          onPressed: selectedDate?.date == doc.date
                               ? null
                               : () {
-                                  selectedDate = doc.date;
+                                  selectedDate = doc;
                                   setState(() {});
                                 },
                           child: Text(
@@ -129,7 +123,7 @@ class _TablesState extends State<Tables> {
                             ).format(doc.date.toDate()),
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: selectedDate == doc.date
+                              color: selectedDate == doc
                                   ? Colors.grey
                                   : Colors.deepPurple,
                             ),
@@ -147,9 +141,16 @@ class _TablesState extends State<Tables> {
                     .collection('tables')
                     .where(
                       'date',
-                      isGreaterThanOrEqualTo: _getStartOfDay(selectedDate!),
+                      isGreaterThanOrEqualTo: _getStartOfDay(
+                        selectedDate?.date ?? Timestamp.now(),
+                      ),
                     )
-                    .where('date', isLessThan: _getEndOfDay(selectedDate!))
+                    .where(
+                      'date',
+                      isLessThan: _getEndOfDay(
+                        selectedDate?.date ?? Timestamp.now(),
+                      ),
+                    )
                     .orderBy('date')
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -271,7 +272,11 @@ class _TablesState extends State<Tables> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/createTable');
+                    Navigator.pushNamed(
+                      context,
+                      '/createTable',
+                      arguments: {'selectedDate': selectedDate, 'dates': dates},
+                    );
                   },
                   child: const Text(
                     'Crea nuovo tavolo',
