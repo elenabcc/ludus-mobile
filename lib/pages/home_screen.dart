@@ -1,37 +1,61 @@
 import 'package:flutter/material.dart';
+import 'games.dart';
+import 'tables.dart';
+import 'ranking.dart';
+import 'profile.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  final String title = 'LudusGate';
+
+  @override
+  State<HomeScreen> createState() => _MyHomePageState();
+}
+
+final List<Widget> pages = [
+  Tables(),
+  const Games(),
+  const Ranking(),
+  const Profile(),
+];
+
+class _MyHomePageState extends State<HomeScreen> {
+  int currentPageIndex = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
+      bottomNavigationBar: NavigationBar(
+        onDestinationSelected: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
+        indicatorColor: Colors.deepPurple,
+        selectedIndex: currentPageIndex,
+        destinations: const <Widget>[
+          NavigationDestination(
+            selectedIcon: Icon(Icons.grid_view_sharp),
+            icon: Icon(Icons.grid_view_outlined),
+            label: 'Tavoli',
+          ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.casino),
+            icon: Icon(Icons.casino_outlined),
+            label: 'Giochi',
+          ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.star),
+            icon: Icon(Icons.star_border),
+            label: 'Ranking',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_ind),
+            label: "Profilo",
+          ),
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.home,
-              size: 80,
-              color: Colors.blueAccent,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Benvenuto nella Homepage!',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Qui puoi iniziare a navigare la tua app Flutter.',
-              style: TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+      body: pages[currentPageIndex],
     );
   }
 }

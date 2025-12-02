@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "631171053478",
+    "project_id": "ludusgate-90f2b",
+    "storage_bucket": "ludusgate-90f2b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631171053478:android:89e5d984e76ea523f5c167",
+        "android_client_info": {
+          "package_name": "com.example.trying_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQVRopud-xJ-x_0yZatGR11wo6M-6xmvA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

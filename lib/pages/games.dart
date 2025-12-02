@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'base_page/base_page.dart';
 
-class Game{
+class Game {
   final int id;
   final String title;
   final List<int> numPlayers;
@@ -16,7 +17,22 @@ class Game{
   final List<String> mechanics;
   final List<String> owner;
 
-  const Game({required this.id, required this.title, required this.numPlayers, required this.duration, required this.description, required this.evaluation, required this.author, required this.graphic, required this.pubYear, required this.gameType, required this.age, required this.category, required this.mechanics, required this.owner});
+  const Game({
+    required this.id,
+    required this.title,
+    required this.numPlayers,
+    required this.duration,
+    required this.description,
+    required this.evaluation,
+    required this.author,
+    required this.graphic,
+    required this.pubYear,
+    required this.gameType,
+    required this.age,
+    required this.category,
+    required this.mechanics,
+    required this.owner,
+  });
 }
 
 class Games extends StatelessWidget {
@@ -24,9 +40,9 @@ class Games extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Games')),
-      body: Center(child: Text('Contenuto Games')),
+    return BasePage(
+      title: 'Giochi',
+      body: Center(child: Text('Contenuto Giochi')),
     );
   }
 }

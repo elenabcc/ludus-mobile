@@ -14,24 +14,27 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return SignInScreen(
-            providers: [
-              EmailAuthProvider(),
-            ],
+            providers: [EmailAuthProvider()],
+            showAuthActionSwitch: false,
             headerBuilder: (context, constraints, shrinkOffset) {
               return Padding(
                 padding: const EdgeInsets.all(20),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Image.asset('assets/logo.png'),
+                child: SizedBox(
+                  width: constraints.maxWidth * 0.5,
+                  height: constraints.maxWidth * 0.5,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: Image.asset('assets/logo.png'),
+                  ),
                 ),
               );
             },
             subtitleBuilder: (context, action) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: action == AuthAction.signIn
-                    ? const Text('Benvenuto! Accedi per organizzare i tuoi giochi.')
-                    : const Text('Registrati per unirti all\'associazione.'),
+                child: const Text(
+                  'Benvenuto! Accedi per organizzare i tuoi giochi.',
+                ),
               );
             },
             actions: [
